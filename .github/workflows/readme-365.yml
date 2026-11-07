@@ -1,0 +1,81 @@
+name: README 365
+
+on:
+  schedule:
+    # 03:17 UTC chaque jour. GitHub peut décaler de quelques minutes à ~1 h en cas de pic.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+    # Volontairement restreint : un commit sur README.md ne redéclenche donc PAS le workflow
+    # (pas de boucle infinie de commits).
+    paths:
+      - 'README.template.md'
+      - 'scripts/**'
+      - '.github/workflows/readme-365.yml'
+
+# GITHUB_TOKEN en écriture : pas besoin de créer un PAT à la main.
+permissions:
+  contents: write
+
+# Deux runs ne se marchent jamais dessus.
+concurrency:
+  group: readme-365
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Générer README.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_LOGIN: ${{ github.repository_owner }}
+          README_TZ: Europe/Paris
+        run: node scripts/generate.mjs
+
+      - name: Résoudre l'e-mail de commit
+        id: who
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          OWNER: ${{ github.repository_owner }}
+          SECRET_EMAIL: ${{ secrets.README_COMMIT_EMAIL }}
+        run: |
+          set -euo pipefail
+          EMAIL="${SECRET_EMAIL:-}"
+          if [ -z "$EMAIL" ]; then
+            # Repli automatique : l'adresse noreply officielle du compte.
+            # Elle est toujours rattachée et vérifiée, donc la case se colore.
+            ID="$(curl -fsSL -H "Authorization: Bearer $GITHUB_TOKEN" \
+                    -H "Accept: application/vnd.github+json" \
+                    "https://api.github.com/users/$OWNER" | node -p "JSON.parse(require('fs').readFileSync(0,'utf8')).id")"
+            EMAIL="${ID}+${OWNER}@users.noreply.github.com"
+            echo "::notice::Pas de secret README_COMMIT_EMAIL — repli sur $EMAIL"
+          fi
+          echo "email=$EMAIL" >> "$GITHUB_OUTPUT"
+
+      - name: Commit + push (seulement si ça a changé)
+        env:
+          # ⚠️ L'e-mail DOIT être rattaché à ton compte GitHub, sinon la case du graphe ne se colore pas.
+          COMMIT_NAME: ${{ github.repository_owner }}
+          COMMIT_EMAIL: ${{ steps.who.outputs.email }}
+          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
+        run: |
+          set -euo pipefail
+          git config user.name  "$COMMIT_NAME"
+          git config user.email "$COMMIT_EMAIL"
+          git add README.md data/ || true
+          if git diff --staged --quiet; then
+            echo "Rien à committer aujourd'hui (contenu identique)."
+            exit 0
+          fi
+          git commit -m "chore(readme): mise à jour du $(date -u +%Y-%m-%d) — auteur <$COMMIT_EMAIL>"
+          # push explicite vers la branche par défaut : fonctionne aussi en checkout détaché
+          git push origin "HEAD:${DEFAULT_BRANCH:-main}"
