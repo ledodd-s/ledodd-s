@@ -1,0 +1,15 @@
+{
+  "name": "readme-365",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "README de profil régénéré automatiquement chaque jour (streak GitHub 365/365)",
+  "scripts": {
+    "build": "node scripts/generate.mjs",
+    "check": "node scripts/generate.mjs --check",
+    "backfill": "node scripts/backfill.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
