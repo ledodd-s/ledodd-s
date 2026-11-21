@@ -2,9 +2,9 @@
 
 J'apprends, je construis, et je documente ce que je fabrique.
 
-- 🔥 **689 jours** de commit d'affilée (record : 689 jours) — série démarrée le 2025-01-01
+- 🔥 **690 jours** de commit d'affilée (record : 690 jours) — série démarrée le 2025-01-01
 - 📦 **1** repos publics · ⭐ **0** stars gagnées · 👥 **0** followers
-- ⏱ **42 jours** avant 2027
+- ⏱ **41 jours** avant 2027
 
 ### Derniers projets
 
@@ -12,6 +12,6 @@ _Ajoute tes projets dans README.template.md._
 
 ---
 
-Dernière mise à jour : **Fri, 20 Nov 2026** · run n°689
+Dernière mise à jour : **Sat, 21 Nov 2026** · run n°690
 
-🤖 Ce README est régénéré chaque jour avec sunshine, par mon workflow ❤️
+🤖 Ce README est régénéré chaque jour avec coffee, par mon workflow ❤️
